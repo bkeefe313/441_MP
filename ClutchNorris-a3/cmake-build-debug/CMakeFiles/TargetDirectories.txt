@@ -1,0 +1,3 @@
+/Users/jjarroyo/Library/CloudStorage/OneDrive-Personal/Documents/Fall Semester 2022/Computer Graphics/a3/cmake-build-debug/CMakeFiles/a3.dir
+/Users/jjarroyo/Library/CloudStorage/OneDrive-Personal/Documents/Fall Semester 2022/Computer Graphics/a3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/jjarroyo/Library/CloudStorage/OneDrive-Personal/Documents/Fall Semester 2022/Computer Graphics/a3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
