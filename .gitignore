@@ -34,4 +34,3 @@
 # Project directories
 cmake-build-debug/
 include/
-shaders/
