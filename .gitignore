@@ -32,6 +32,5 @@
 *.app
 
 # Project directories
-cmake-build-debug/
-include/
-shaders/
+*/cmake-build-debug/
+*/include/
