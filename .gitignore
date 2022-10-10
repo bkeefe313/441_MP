@@ -34,3 +34,4 @@
 # Project directories
 cmake-build-debug/
 include/
+.idea/
