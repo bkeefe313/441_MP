@@ -102,6 +102,10 @@ void A3Engine::_setupOpenGL() {
 }
 
 void A3Engine::_setupShaders() {
+    _texShaderProgram = new CSCI441::ShaderProgram(
+            "shaders/textureShader.v.glsl",
+            "shaders/textureShader.f.glsl");
+
     _lightingShaderProgram = new CSCI441::ShaderProgram("shaders/lab05.v.glsl", "shaders/lab05.f.glsl" );
     _lightingShaderUniformLocations.mvpMatrix      = _lightingShaderProgram->getUniformLocation("mvpMatrix");
     _lightingShaderUniformLocations.materialColor  = _lightingShaderProgram->getUniformLocation("materialColor");
@@ -118,9 +122,23 @@ void A3Engine::_setupShaders() {
 
 void A3Engine::_setupBuffers() {
     // TODO #4: need to connect our 3D Object Library to our shader
+    CSCI441::setVertexAttributeLocations( _textureShaderAttributeLocations.vPos, _textureShaderAttributeLocations.vertNorm);
+
+    //// Bring in Objects
+    _arthur = new Arthur();
+    _arthur->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
+                       -1,
+                       _texShaderProgram->getAttributeLocation("vTexCoord"));
+
+
+    _clutch = new Clutch();
+    _clutch->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
+                       -1,
+                       _texShaderProgram->getAttributeLocation("vTexCoord"));
+
     CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vertNorm);
 
-    // TODO #5: give the plane the normal matrix location
+    // OG car model
     _player = new Player(_lightingShaderProgram->getShaderProgramHandle(),
                          _lightingShaderUniformLocations.mvpMatrix,
                          _lightingShaderUniformLocations.normMatrix,
@@ -216,11 +234,13 @@ void A3Engine::_generateEnvironment() {
 }
 
 void A3Engine::_setupScene() {
+//    Original Free cam implementation
 //    _freeCam = new CSCI441::FreeCam();
 //    _freeCam->setPosition( glm::vec3(60.0f, 40.0f, 30.0f) );
 //    _freeCam->setTheta( -M_PI / 3.0f );
 //    _freeCam->setPhi( M_PI / 2.8f );
 //    _freeCam->recomputeOrientation();
+
     playerAngle = 0.0f;
     playerDirection = glm::normalize(-glm::vec3(0, 0, 0.07)) * 0.1f;
     _arcBall = new ArcBall();
@@ -262,6 +282,8 @@ void A3Engine::_cleanupBuffers() {
 
     fprintf( stdout, "[INFO]: ...deleting models..\n" );
     delete _player;
+    delete _arthur;
+    delete _clutch;
 }
 
 //*************************************************************************************
@@ -282,7 +304,8 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
-    //// END DRAWING THE GROUND PLANE ////
+    //// END DRAWING THE GROUND PLANE ///
+
 
     //// BEGIN DRAWING THE BUILDINGS ////
     for( const BuildingData& currentBuilding : _buildings ) {
@@ -306,6 +329,26 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // draw our plane now
     _player->drawPlayer(modelMtx, viewMtx, projMtx );
     //// END DRAWING THE PLANE ////
+
+    //// Begin Drawing Characters ////
+    glm::mat4 mvpMtx = projMtx * viewMtx;
+    glm::mat4 arthurModelMtx = glm::translate(mvpMtx, _arthur->_position);
+    arthurModelMtx = glm::scale(mvpMtx, _arthur->_scale);
+    glm::mat4 clutchModelMtx = glm::translate(mvpMtx, glm::vec3(3.0f, 0.0f, 0.0f));
+    _texShaderProgram->useProgram();
+    glProgramUniformMatrix4fv(
+            _texShaderProgram->getShaderProgramHandle(),
+            _texShaderProgram->getUniformLocation("mvpMtx"),
+            1,
+            GL_FALSE, &arthurModelMtx[0][0]);
+    _arthur->_model->draw(_texShaderProgram->getShaderProgramHandle());
+    glProgramUniformMatrix4fv(
+            _texShaderProgram->getShaderProgramHandle(),
+            _texShaderProgram->getUniformLocation("mvpMtx"),
+            1,
+            GL_FALSE, &clutchModelMtx[0][0]);
+    _clutch->_model->draw(_texShaderProgram->getShaderProgramHandle());
+    //// End Drawing Characters ////
 }
 
 void A3Engine::_updateScene() {

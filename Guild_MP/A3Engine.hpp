@@ -3,10 +3,12 @@
 
 #include <CSCI441/FreeCam.hpp>
 #include "ArcBall.h"
+#include "Arthur.hpp"
 #include <CSCI441/OpenGLEngine.hpp>
 #include <CSCI441/ShaderProgram.hpp>
 
 #include "Player.hpp"
+#include "Clutch.hpp"
 
 #include <vector>
 
@@ -69,11 +71,15 @@ private:
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
 
-    /// \desc our plane model
+    /// \desc our character models
     Player* _player;
     float playerAngle;
     glm::vec3 playerDirection;
     glm::vec3 playerPos;
+
+    Arthur* _arthur;
+
+    Clutch* _clutch;
 
     /// \desc the size of the world (controls the ground size and locations of buildings)
     static constexpr GLfloat WORLD_SIZE = 55.0f;
@@ -100,6 +106,7 @@ private:
 
     /// \desc shader program that performs lighting
     CSCI441::ShaderProgram* _lightingShaderProgram = nullptr;   // the wrapper for our shader program
+    CSCI441::ShaderProgram* _texShaderProgram = nullptr;
     /// \desc stores the locations of all of our shader uniforms
     struct LightingShaderUniformLocations {
         /// \desc precomputed MVP matrix location
@@ -120,6 +127,26 @@ private:
         GLint vertNorm;
 
     } _lightingShaderAttributeLocations;
+
+    struct TextureShaderUniformLocations {
+        /// \desc precomputed MVP matrix location
+        GLint mvpMatrix;
+        /// \desc material diffuse color location
+        GLint materialColor;
+        // TODO #1: add new uniforms
+        GLint lightDirection;
+        GLint lightColor;
+        GLint normMatrix;
+
+    } _textureShaderUniformLocations;
+    /// \desc stores the locations of all of our shader attributes
+    struct TextureShaderAttributeLocations {
+        /// \desc vertex position location
+        GLint vPos;
+        // TODO #2: add new attributes
+        GLint vertNorm;
+
+    } _textureShaderAttributeLocations;
 
     /// \desc precomputes the matrix uniforms CPU-side and then sends them
     /// to the GPU to be used in the shader for each vertex.  It is more efficient
