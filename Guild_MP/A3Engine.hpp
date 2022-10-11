@@ -122,8 +122,14 @@ private:
         /// \desc material diffuse color location
         GLint materialColor;
         // TODO #1: add new uniforms
-        GLint lightDirection;
-        GLint lightColor;
+        GLint pointLightPos;
+        GLint pointLightColor;
+        GLint dirLightDir;
+        GLint dirLightColor;
+        GLint spotLightPos;
+        GLint spotLightDir;
+        GLint spotLightAngle;
+        GLint spotLightColor;
         GLint normMatrix;
 
     } _lightingShaderUniformLocations;

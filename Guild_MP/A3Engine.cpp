@@ -110,8 +110,14 @@ void A3Engine::_setupShaders() {
     _lightingShaderUniformLocations.mvpMatrix      = _lightingShaderProgram->getUniformLocation("mvpMatrix");
     _lightingShaderUniformLocations.materialColor  = _lightingShaderProgram->getUniformLocation("materialColor");
     // TODO #3A: assign uniforms
-    _lightingShaderUniformLocations.lightColor = _lightingShaderProgram->getUniformLocation("lightColor");
-    _lightingShaderUniformLocations.lightDirection = _lightingShaderProgram->getUniformLocation("lightDirection");
+    _lightingShaderUniformLocations.pointLightColor = _lightingShaderProgram->getUniformLocation("pointLightColor");
+    _lightingShaderUniformLocations.pointLightPos = _lightingShaderProgram->getUniformLocation("pointLightPos");
+    _lightingShaderUniformLocations.spotLightPos = _lightingShaderProgram->getUniformLocation("spotLightPos");
+    _lightingShaderUniformLocations.spotLightDir = _lightingShaderProgram->getUniformLocation("spotLightDir");
+    _lightingShaderUniformLocations.spotLightAngle = _lightingShaderProgram->getUniformLocation("spotLightAngle");
+    _lightingShaderUniformLocations.spotLightColor = _lightingShaderProgram->getUniformLocation("spotLightColor");
+    _lightingShaderUniformLocations.dirLightDir = _lightingShaderProgram->getUniformLocation("dirLightDir");
+    _lightingShaderUniformLocations.dirLightColor = _lightingShaderProgram->getUniformLocation("dirLightColor");
     _lightingShaderUniformLocations.normMatrix = _lightingShaderProgram->getUniformLocation("normMatrix");
 
     _lightingShaderAttributeLocations.vPos         = _lightingShaderProgram->getAttributeLocation("vPos");
@@ -148,10 +154,6 @@ void A3Engine::_setupBuffers() {
                          _lightingShaderUniformLocations.mvpMatrix,
                          _lightingShaderUniformLocations.normMatrix,
                          _lightingShaderUniformLocations.materialColor);
-
-    _pointLight = new Light(glm::vec3(0, 100, 0), glm::vec3(1, 1, 1));
-    _dirLight = new Light(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1), DIRECTIONAL);
-    _spotlight = new Light(glm::vec3(100, 100, -100), glm::vec3(-1, -1, 1), 20, glm::vec3(1, 1, 1));
 
     _createGroundBuffers();
     _generateEnvironment();
@@ -265,10 +267,23 @@ void A3Engine::_setupScene() {
     _cameraSpeed = glm::vec2(0.25f, 0.02f);
 
     // TODO #6: set lighting uniforms
-    glm::vec3 lightDir = glm::vec3(-1,-1,-1);
-    glm::vec3 lightCol = glm::vec3(1,1,1);
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightDirection, 1, &lightDir[0]);
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightColor, 1, &lightCol[0]);
+    _pointLight = new Light(glm::vec3(0, 100, 0), glm::vec3(1, 1, 1));
+    _dirLight = new Light(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1), DIRECTIONAL);
+    _spotlight = new Light(glm::vec3(100, 100, -100), glm::vec3(-1, -1, 1), 20, glm::vec3(1, 1, 1));
+
+    //point light
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightPos, 1, &(_pointLight->getPosition())[0]);
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightColor, 1, &(_pointLight->getColor())[0]);
+
+    //directional light
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.dirLightDir, 1, &(_dirLight->getDirection())[0]);
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.dirLightColor, 1, &(_dirLight->getColor())[0]);
+
+    //spot light
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightPos, 1, &(_spotlight->getPosition())[0]);
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightDir, 1, &(_spotlight->getDirection())[0]);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightAngle, _spotlight->getAngle());
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightColor, 1, &(_spotlight->getColor())[0]);
 
 }
 
