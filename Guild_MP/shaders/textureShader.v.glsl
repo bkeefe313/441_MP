@@ -39,30 +39,35 @@ void main() {
 
     // TODO #B: computer Light vectors
     vec3 dirLightRefl = normalize(-dirLightDir);
-    vec3 pointLightRefl = normalize(pointLightPos - vPos);
-    vec3 spotLightRefl = normalize(spotLightPos - vPos);
+    vec3 pointLightRefl = -normalize(pointLightPos - vPos);
+    vec3 spotLightRefl = -normalize(spotLightPos - vPos);
     if(abs(acos(dot(spotLightRefl, normalize(spotLightDir)))) > spotLightAngle)
     spotLightRefl = vec3(0);
 
     //compute attenutations
-    float pointAttenuation = length(vPos - pointLightPos);
-    float spotAttenuation = length(vPos - spotLightPos);
+    float pointAttenuation = length(vPos - pointLightPos)*3;
+    float spotAttenuation = length(vPos - spotLightPos)*3;
 
     //compute view dir
     vec3 viewDir = normalize(camPos - vPos);
 
-    // TODO #E: transform normal vector
+    //transform normal vector
     vec3 transVert = normMatrix * vertNorm;
+
+    //compute spectral reflectance vector
+    vec3 dirSpecRefl = normalize(-dirLightDir+(2*dot(vertNorm, dirLightDir)*vertNorm));
+    vec3 pointSpecRefl = normalize(pointLightRefl+(2*dot(vertNorm, -pointLightRefl)*vertNorm));
+    vec3 spotSpecRefl = normalize(spotLightRefl+(2*dot(vertNorm, -spotLightRefl)*vertNorm));
 
     // TODO #F: perform diffuse calculations
     vec3 i_d =  (pointLightColor * max(dot(pointLightRefl, transVert), 0)/pointAttenuation) +
-                dirLightColor * max(dot(dirLightRefl, transVert), 0) +
-                (spotLightColor * max(dot(spotLightRefl, transVert), 0)/spotAttenuation);
+    dirLightColor * max(dot(dirLightRefl, transVert), 0) +
+    (spotLightColor * max(dot(spotLightRefl, transVert), 0)/spotAttenuation);
 
     // perform specular calculations
-    vec3 i_s =  (pointLightColor * max(dot(pointLightRefl, viewDir), 0)/pointAttenuation) +
-                dirLightColor * max(dot(dirLightRefl, viewDir), 0) +
-                (spotLightColor * max(dot(spotLightRefl, viewDir), 0)/spotAttenuation);
+    vec3 i_s =  (pointLightColor * max(dot(pointSpecRefl, viewDir), 0)/pointAttenuation) +
+    dirLightColor * max(dot(dirSpecRefl, viewDir), 0) +
+    (spotLightColor * max(dot(spotSpecRefl, viewDir), 0)/spotAttenuation);
 
     //perform ambient calculation
     vec3 i_a = vec3(1) / 3;

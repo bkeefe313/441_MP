@@ -174,7 +174,6 @@ void A3Engine::_setupBuffers() {
                          _lightingShaderUniformLocations.materialColor);
 
     _createGroundBuffers();
-    _generateEnvironment();
 }
 
 void A3Engine::_createGroundBuffers() {
@@ -263,12 +262,6 @@ void A3Engine::_generateEnvironment() {
 }
 
 void A3Engine::_setupScene() {
-//    Original Free cam implementation
-//    _freeCam = new CSCI441::FreeCam();
-//    _freeCam->setPosition( glm::vec3(60.0f, 40.0f, 30.0f) );
-//    _freeCam->setTheta( -M_PI / 3.0f );
-//    _freeCam->setPhi( M_PI / 2.8f );
-//    _freeCam->recomputeOrientation();
 
     playerAngle = 0.0f;
     playerDirection = glm::normalize(-glm::vec3(0, 0, 0.07)) * 0.1f;
@@ -287,7 +280,7 @@ void A3Engine::_setupScene() {
     // TODO #6: set lighting uniforms
     _pointLight = new Light(glm::vec3(0, 100, 0), glm::vec3(1, 1, 1));
     _dirLight = new Light(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1), DIRECTIONAL);
-    _spotlight = new Light(glm::vec3(100, 100, -100), glm::vec3(-1, -1, 1), 20, glm::vec3(1, 1, 1));
+    _spotlight = new Light(glm::vec3(100, 100, -100), glm::vec3(-1, -1, 1), M_PI/4, glm::vec3(1, 1, 1));
 
     //point light
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightPos, 1, &(_pointLight->getPosition())[0]);
@@ -358,17 +351,6 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
     //// END DRAWING THE GROUND PLANE ///
-
-
-    //// BEGIN DRAWING THE BUILDINGS ////
-    for( const BuildingData& currentBuilding : _buildings ) {
-        _computeAndSendMatrixUniforms(currentBuilding.modelMatrix, viewMtx, projMtx);
-
-        glUniform3fv(_lightingShaderUniformLocations.materialColor, 1, &currentBuilding.color[0]);
-
-        CSCI441::drawSolidCube(1.0);
-    }
-    //// END DRAWING THE BUILDINGS ////
 
     //// BEGIN DRAWING THE PLANE ////
     glm::mat4 modelMtx(1.0f);
