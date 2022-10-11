@@ -134,6 +134,7 @@ private:
         GLint camPos;
 
     } _lightingShaderUniformLocations;
+
     /// \desc stores the locations of all of our shader attributes
     struct LightingShaderAttributeLocations {
         /// \desc vertex position location
@@ -146,20 +147,25 @@ private:
     struct TextureShaderUniformLocations {
         /// \desc precomputed MVP matrix location
         GLint mvpMatrix;
-        /// \desc material diffuse color location
-        GLint materialColor;
-        // TODO #1: add new uniforms
-        GLint lightDirection;
-        GLint lightColor;
+        GLint pointLightPos;
+        GLint pointLightColor;
+        GLint dirLightDir;
+        GLint dirLightColor;
+        GLint spotLightPos;
+        GLint spotLightDir;
+        GLint spotLightAngle;
+        GLint spotLightColor;
         GLint normMatrix;
-
+        GLint camPos;
     } _textureShaderUniformLocations;
+
     /// \desc stores the locations of all of our shader attributes
     struct TextureShaderAttributeLocations {
         /// \desc vertex position location
         GLint vPos;
         // TODO #2: add new attributes
         GLint vertNorm;
+        GLint vTexCoord;
 
     } _textureShaderAttributeLocations;
 

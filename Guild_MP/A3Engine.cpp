@@ -106,6 +106,23 @@ void A3Engine::_setupShaders() {
             "shaders/textureShader.v.glsl",
             "shaders/textureShader.f.glsl");
 
+    // assign uniforms
+    _textureShaderUniformLocations.mvpMatrix = _texShaderProgram->getUniformLocation("mvpMatrix");
+    _textureShaderUniformLocations.pointLightColor = _texShaderProgram->getUniformLocation("pointLightColor");
+    _textureShaderUniformLocations.pointLightPos = _texShaderProgram->getUniformLocation("pointLightPos");
+    _textureShaderUniformLocations.spotLightPos = _texShaderProgram->getUniformLocation("spotLightPos");
+    _textureShaderUniformLocations.spotLightDir = _texShaderProgram->getUniformLocation("spotLightDir");
+    _textureShaderUniformLocations.spotLightAngle = _texShaderProgram->getUniformLocation("spotLightAngle");
+    _textureShaderUniformLocations.spotLightColor = _texShaderProgram->getUniformLocation("spotLightColor");
+    _textureShaderUniformLocations.dirLightDir = _texShaderProgram->getUniformLocation("dirLightDir");
+    _textureShaderUniformLocations.dirLightColor = _texShaderProgram->getUniformLocation("dirLightColor");
+    _textureShaderUniformLocations.normMatrix = _texShaderProgram->getUniformLocation("normMatrix");
+    _textureShaderUniformLocations.camPos = _texShaderProgram->getUniformLocation("camPos");
+
+    _textureShaderAttributeLocations.vPos = _texShaderProgram->getAttributeLocation("vPos");
+    _textureShaderAttributeLocations.vTexCoord = _texShaderProgram->getAttributeLocation("vTexCoord");
+    _textureShaderAttributeLocations.vertNorm = _texShaderProgram->getAttributeLocation("vertNorm");
+
     _lightingShaderProgram = new CSCI441::ShaderProgram("shaders/lab05.v.glsl", "shaders/lab05.f.glsl" );
     _lightingShaderUniformLocations.mvpMatrix      = _lightingShaderProgram->getUniformLocation("mvpMatrix");
     _lightingShaderUniformLocations.materialColor  = _lightingShaderProgram->getUniformLocation("materialColor");
@@ -133,19 +150,19 @@ void A3Engine::_setupBuffers() {
 
     //// Bring in Objects
     _arthur = new Arthur();
-    _arthur->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
-                       -1,
+    _arthur->initModel(_texShaderProgram->getAttributeLocation("vPos"),
+                       _textureShaderAttributeLocations.vertNorm,
                        _texShaderProgram->getAttributeLocation("vTexCoord"));
 
 
     _clutch = new Clutch();
-    _clutch->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
-                       -1,
+    _clutch->initModel(_texShaderProgram->getAttributeLocation("vPos"),
+                       _textureShaderAttributeLocations.vertNorm,
                        _texShaderProgram->getAttributeLocation("vTexCoord"));
 
     _saul = new Saul();
-    _saul->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
-                     -1,
+    _saul->initModel(_texShaderProgram->getAttributeLocation("vPos"),
+                     _textureShaderAttributeLocations.vertNorm,
                      _texShaderProgram->getAttributeLocation("vTexCoord"));
 
     CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vertNorm);
@@ -275,16 +292,25 @@ void A3Engine::_setupScene() {
     //point light
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightPos, 1, &(_pointLight->getPosition())[0]);
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightColor, 1, &(_pointLight->getColor())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.pointLightPos, 1, &(_pointLight->getPosition())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.pointLightColor, 1, &(_pointLight->getColor())[0]);
 
     //directional light
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.dirLightDir, 1, &(_dirLight->getDirection())[0]);
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.dirLightColor, 1, &(_dirLight->getColor())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.dirLightDir, 1, &(_dirLight->getDirection())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.dirLightColor, 1, &(_dirLight->getColor())[0]);
+
 
     //spot light
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightPos, 1, &(_spotlight->getPosition())[0]);
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightDir, 1, &(_spotlight->getDirection())[0]);
     glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightAngle, _spotlight->getAngle());
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightColor, 1, &(_spotlight->getColor())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.spotLightPos, 1, &(_spotlight->getPosition())[0]);
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.spotLightDir, 1, &(_spotlight->getDirection())[0]);
+    glProgramUniform1f(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.spotLightAngle, _spotlight->getAngle());
+    glProgramUniform3fv(_texShaderProgram->getShaderProgramHandle(), _textureShaderUniformLocations.spotLightColor, 1, &(_spotlight->getColor())[0]);
 
 }
 
@@ -363,15 +389,16 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     arthurModelMtx = glm::scale(mvpMtx, _arthur->_scale);
     glm::mat4 clutchModelMtx = glm::translate(mvpMtx, glm::vec3(3.0f, 0.0f, 0.0f));
     _texShaderProgram->useProgram();
+    glUniform3fv(_textureShaderUniformLocations.camPos, 1, &(_arcBall->getPosition())[0]);
     glProgramUniformMatrix4fv(
             _texShaderProgram->getShaderProgramHandle(),
-            _texShaderProgram->getUniformLocation("mvpMtx"),
+            _textureShaderUniformLocations.mvpMatrix,
             1,
             GL_FALSE, &arthurModelMtx[0][0]);
     _arthur->_model->draw(_texShaderProgram->getShaderProgramHandle());
     glProgramUniformMatrix4fv(
             _texShaderProgram->getShaderProgramHandle(),
-            _texShaderProgram->getUniformLocation("mvpMtx"),
+            _textureShaderUniformLocations.mvpMatrix,
             1,
             GL_FALSE, &clutchModelMtx[0][0]);
     _clutch->_model->draw(_texShaderProgram->getShaderProgramHandle());
@@ -474,10 +501,12 @@ void A3Engine::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewM
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     // then send it to the shader on the GPU to apply to every vertex
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.mvpMatrix, mvpMtx);
+    _texShaderProgram->setProgramUniform(_textureShaderUniformLocations.mvpMatrix, mvpMtx);
 
     // TODO #7: compute and send the normal matrix
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.normMatrix, normalMtx);
+    _texShaderProgram->setProgramUniform(_textureShaderUniformLocations.normMatrix, normalMtx);
 
 }
 

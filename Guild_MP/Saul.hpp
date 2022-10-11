@@ -84,13 +84,13 @@ public:
         finalMtx = glm::rotate(finalMtx, -glm::pi<GLfloat>()/2, glm::vec3(1,0,0));
         shader->useProgram();
 
-        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(), shader->getUniformLocation("mvpMtx"),
+        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(), shader->getUniformLocation("mvpMatrix"),
                                   1, GL_FALSE, &finalMtx[0][0]);
         _model->draw( shader->getShaderProgramHandle() );
 
 
         finalMtx = glm::rotate(finalMtx, _limbAngle, glm::vec3(1,0,0));
-        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(), shader->getUniformLocation("mvpMtx"),
+        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(), shader->getUniformLocation("mvpMatrix"),
                                   1, GL_FALSE, &finalMtx[0][0]);
         _limbs->draw( shader->getShaderProgramHandle() );
 
