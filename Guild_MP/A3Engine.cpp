@@ -136,6 +136,11 @@ void A3Engine::_setupBuffers() {
                        -1,
                        _texShaderProgram->getAttributeLocation("vTexCoord"));
 
+    _saul = new Saul();
+    _saul->initModel(_texShaderProgram->getAttributeLocation("vPosition"),
+                     -1,
+                     _texShaderProgram->getAttributeLocation("vTexCoord"));
+
     CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vertNorm);
 
     // OG car model
@@ -143,6 +148,10 @@ void A3Engine::_setupBuffers() {
                          _lightingShaderUniformLocations.mvpMatrix,
                          _lightingShaderUniformLocations.normMatrix,
                          _lightingShaderUniformLocations.materialColor);
+
+    _pointLight = new Light(glm::vec3(0, 100, 0), glm::vec3(1, 1, 1));
+    _dirLight = new Light(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1), DIRECTIONAL);
+    _spotlight = new Light(glm::vec3(100, 100, -100), glm::vec3(-1, -1, 1), 20, glm::vec3(1, 1, 1));
 
     _createGroundBuffers();
     _generateEnvironment();
@@ -284,6 +293,7 @@ void A3Engine::_cleanupBuffers() {
     delete _player;
     delete _arthur;
     delete _clutch;
+    delete _saul;
 }
 
 //*************************************************************************************
@@ -348,6 +358,8 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
             1,
             GL_FALSE, &clutchModelMtx[0][0]);
     _clutch->_model->draw(_texShaderProgram->getShaderProgramHandle());
+
+    _saul->draw(projMtx, viewMtx, _texShaderProgram);
     //// End Drawing Characters ////
 }
 

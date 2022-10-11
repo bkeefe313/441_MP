@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(a3)
 set(CMAKE_CXX_STANDARD 17)
-set(SOURCE_FILES main.cpp A3Engine.cpp A3Engine.hpp Player.cpp Player.hpp ArcBall.cpp ArcBall.h Arthur.cpp Arthur.hpp Clutch.cpp Clutch.hpp Saul.cpp Saul.hpp)
+set(SOURCE_FILES main.cpp A3Engine.cpp A3Engine.hpp Player.cpp Player.hpp ArcBall.cpp ArcBall.h Arthur.cpp Arthur.hpp Clutch.cpp Clutch.hpp Saul.hpp Light.hpp)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Windows with MinGW Installations

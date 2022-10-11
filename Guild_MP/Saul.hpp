@@ -26,7 +26,7 @@ public:
         //instantiate models
         _model = new CSCI441::ModelLoader();
         _limbs = new CSCI441::ModelLoader();
-        _position = glm::vec3(0);
+        _position = glm::vec3(20,0,20);
         _forward = glm::vec3(0,0,1);
         _strafeSpeed = 0;
         _walkSpeed = 0;
@@ -36,7 +36,7 @@ public:
     void initModel(GLint posAttr, GLint normAttr, GLint texAttr) {
         _model->loadModelFile( "models/saul.obj" );
         _model->setAttributeLocations(posAttr, normAttr, texAttr);
-        _limbs->loadModelFile( "models/limbs.obj" );
+        _limbs->loadModelFile( "models/saul_limbs.obj" );
         _limbs->setAttributeLocations(posAttr, normAttr, texAttr);
     }
 
@@ -78,9 +78,8 @@ public:
 
     void draw(glm::mat4 projMtx, glm::mat4 viewMtx, CSCI441::ShaderProgram* shader) {
         glm::mat4 mvpMtx = projMtx * viewMtx;
-
-        /// BEGIN DRAW PLAYER ///
-        glm::mat4 finalMtx = glm::translate(mvpMtx, _position);
+        glm::mat4 finalMtx = glm::scale(mvpMtx, glm::vec3(0.2f, 0.2f, 0.2f));
+        finalMtx = glm::translate(finalMtx, _position);
         finalMtx = glm::rotate(finalMtx, _angle, glm::vec3(0,1,0));
         finalMtx = glm::rotate(finalMtx, -glm::pi<GLfloat>()/2, glm::vec3(1,0,0));
         shader->useProgram();

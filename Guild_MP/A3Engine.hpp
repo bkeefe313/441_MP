@@ -9,6 +9,8 @@
 
 #include "Player.hpp"
 #include "Clutch.hpp"
+#include "Saul.hpp"
+#include "Light.hpp"
 
 #include <vector>
 
@@ -80,6 +82,12 @@ private:
     Arthur* _arthur;
 
     Clutch* _clutch;
+
+    Saul* _saul;
+
+    Light* _pointLight;
+    Light* _dirLight;
+    Light* _spotlight;
 
     /// \desc the size of the world (controls the ground size and locations of buildings)
     static constexpr GLfloat WORLD_SIZE = 55.0f;
