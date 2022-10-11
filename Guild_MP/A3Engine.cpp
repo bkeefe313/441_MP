@@ -119,6 +119,7 @@ void A3Engine::_setupShaders() {
     _lightingShaderUniformLocations.dirLightDir = _lightingShaderProgram->getUniformLocation("dirLightDir");
     _lightingShaderUniformLocations.dirLightColor = _lightingShaderProgram->getUniformLocation("dirLightColor");
     _lightingShaderUniformLocations.normMatrix = _lightingShaderProgram->getUniformLocation("normMatrix");
+    _lightingShaderUniformLocations.camPos = _lightingShaderProgram->getUniformLocation("camPos");
 
     _lightingShaderAttributeLocations.vPos         = _lightingShaderProgram->getAttributeLocation("vPos");
     // TODO #3B: assign attributes
@@ -318,6 +319,7 @@ void A3Engine::_cleanupBuffers() {
 void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // use our lighting shader program
     _lightingShaderProgram->useProgram();
+    glUniform3fv(_lightingShaderUniformLocations.camPos, 1, &(_arcBall->getPosition())[0]);
 
     //// BEGIN DRAWING THE GROUND PLANE ////
     // draw the ground plane

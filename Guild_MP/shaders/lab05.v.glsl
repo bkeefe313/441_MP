@@ -20,7 +20,7 @@ uniform float spotLightAngle;
 uniform vec3 spotLightColor;
 
 //camera position uniform
-uniform vec3 viewDir;
+uniform vec3 camPos;
 
 uniform vec3 materialColor;             // the material color for our vertex (& whole object)
 
@@ -40,25 +40,28 @@ void main() {
     vec3 dirLightRefl = normalize(-dirLightDir);
     vec3 pointLightRefl = normalize(pointLightPos - vPos);
     vec3 spotLightRefl = normalize(spotLightPos - vPos);
-    if(abs(acos(dot(spotLightRefl, spotLightDir))) > spotLightAngle)
+    if(abs(acos(dot(spotLightRefl, normalize(spotLightDir)))) > spotLightAngle)
             spotLightRefl = vec3(0);
 
     //compute attenutations
     float pointAttenuation = length(vPos - pointLightPos);
     float spotAttenuation = length(vPos - spotLightPos);
 
+    //compute view dir
+    vec3 viewDir = normalize(camPos - vPos);
+
     // TODO #E: transform normal vector
     vec3 transVert = normMatrix * vertNorm;
 
     // TODO #F: perform diffuse calculations
-    vec3 i_d =  (pointAttenuation * pointLightColor * materialColor * max(dot(pointLightRefl, transVert), 0)) +
+    vec3 i_d =  (pointLightColor * materialColor * max(dot(pointLightRefl, transVert), 0)/pointAttenuation) +
                 dirLightColor * materialColor * max(dot(dirLightRefl, transVert), 0) +
-                (spotAttenuation * spotLightColor * materialColor * max(dot(spotLightRefl, transVert), 0));
+                (spotLightColor * materialColor * max(dot(spotLightRefl, transVert), 0)/spotAttenuation);
 
     // perform specular calculations
-    vec3 i_s =  (pointAttenuation * pointLightColor * materialColor * max(dot(pointLightRefl, viewDir), 0)) +
+    vec3 i_s =  (pointLightColor * materialColor * max(dot(pointLightRefl, viewDir), 0)/pointAttenuation) +
                 dirLightColor * materialColor * max(dot(dirLightRefl, viewDir), 0) +
-                (spotAttenuation * spotLightColor * materialColor * max(dot(spotLightRefl, viewDir), 0));
+                (spotLightColor * materialColor * max(dot(spotLightRefl, viewDir), 0)/spotAttenuation);
 
     //perform ambient calculation
     vec3 i_a = vec3(1)*materialColor / 3;
@@ -67,5 +70,5 @@ void main() {
     vec3 i_tot = i_d + i_s + i_a;
 
     // TODO #G: assign the color for this vertex
-    color = i_d;
+    color = i_tot;
 }

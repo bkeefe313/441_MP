@@ -131,6 +131,7 @@ private:
         GLint spotLightAngle;
         GLint spotLightColor;
         GLint normMatrix;
+        GLint camPos;
 
     } _lightingShaderUniformLocations;
     /// \desc stores the locations of all of our shader attributes
