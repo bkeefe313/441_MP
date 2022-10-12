@@ -2,7 +2,9 @@
 #define LAB05_LAB05_ENGINE_HPP
 
 #include <CSCI441/FreeCam.hpp>
+#include <CSCI441/Camera.hpp>
 #include "ArcBall.h"
+#include "fpCam.h"
 #include "Arthur.hpp"
 #include <CSCI441/OpenGLEngine.hpp>
 #include <CSCI441/ShaderProgram.hpp>
@@ -51,7 +53,7 @@ private:
     /// \desc draws everything to the scene from a particular point of view
     /// \param viewMtx the current view matrix for our camera
     /// \param projMtx the current projection matrix for our camera
-    void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, CSCI441::Camera*) const;
     /// \desc handles moving our FreeCam as determined by keyboard input
     void _updateScene();
 
@@ -69,25 +71,23 @@ private:
     /// \desc the static fixed camera in our world
     CSCI441::FreeCam* _freeCam;
     ArcBall* _arcBall;
+    FPCam* _fpCam;
     /// \desc pair of values to store the speed the camera can move/rotate.
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
 
     /// \desc our character models
-    Player* _player;
-    float playerAngle;
-    glm::vec3 playerDirection;
-    glm::vec3 playerPos;
-
     Arthur* _arthur;
-
     Clutch* _clutch;
-
     Saul* _saul;
 
     Light* _pointLight;
     Light* _dirLight;
     Light* _spotlight;
+
+    /// \desc camera states
+    bool _firstPerson = false;
+    bool isFreeCam = false;
 
     /// \desc the size of the world (controls the ground size and locations of buildings)
     static constexpr GLfloat WORLD_SIZE = 55.0f;
@@ -176,6 +176,9 @@ private:
     /// \param viewMtx camera view matrix
     /// \param projMtx camera projection matrix
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+
+    std::vector<Character*> _characters;
+    Character* _currentCharacter;
 };
 
 void lab05_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );

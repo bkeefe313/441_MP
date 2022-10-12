@@ -6,28 +6,25 @@
 #endif
 
 #include <CSCI441/ModelLoader.hpp>
+#include "Character.hpp"
 
-class Clutch {
+class Clutch : public Character {
 public:
     CSCI441::ModelLoader* _model;
-    CSCI441::ModelLoader* _limbs;
-    glm::vec3 _position;
-    glm::vec3 _forward;
-    GLfloat _playerAngle;
-    GLfloat _angle;
-    GLfloat _limbAngle;
 
-    Clutch();
+    Clutch() {
+        //instantiate model
+        _model = new CSCI441::ModelLoader();
+        _position = glm::vec3(0,0,0);
+        _forward = glm::vec3(0,0,1);
+    }
 
-    void initModel(GLint posAttr, GLint normAttr, GLint texAttr);
+    void initModel(GLint posAttr, GLint normAttr, GLint texAttr) {
+        _model->loadModelFile( "models/clutchnorris.obj" );
+        _model->setAttributeLocations(posAttr, normAttr, texAttr);
+    }
 
-    void updatePosition(bool forward);
-
-    void changeForward();
-
-private:
-    GLfloat _walkSpeed;
-    GLfloat _strafeSpeed;
+    
 };
 
 

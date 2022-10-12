@@ -1,6 +1,8 @@
 #include "A3Engine.hpp"
+#include "fpCam.h"
 
 #include <CSCI441/objects.hpp>
+#include <CSCI441/Camera.hpp>
 #include <cmath>
 #include <iostream>
 
@@ -34,6 +36,8 @@ A3Engine::A3Engine()
 
 A3Engine::~A3Engine() {
     delete _arcBall;
+    delete _freeCam;
+    delete _fpCam;
 }
 
 void A3Engine::handleKeyEvent(GLint key, GLint action) {
@@ -47,7 +51,12 @@ void A3Engine::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_ESCAPE:
                 setWindowShouldClose();
                 break;
-
+            case GLFW_KEY_4:
+                _firstPerson = !_firstPerson;
+                break;
+            case GLFW_KEY_5:
+                isFreeCam = !isFreeCam;
+                break;
             default: break; // suppress CLion warning
         }
     }
@@ -165,13 +174,14 @@ void A3Engine::_setupBuffers() {
                      _textureShaderAttributeLocations.vertNorm,
                      _texShaderProgram->getAttributeLocation("vTexCoord"));
 
+    _characters= {
+            _arthur,
+            _clutch,
+            _saul
+    };
+
     CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vertNorm);
 
-    // OG car model
-    _player = new Player(_lightingShaderProgram->getShaderProgramHandle(),
-                         _lightingShaderUniformLocations.mvpMatrix,
-                         _lightingShaderUniformLocations.normMatrix,
-                         _lightingShaderUniformLocations.materialColor);
 
     _createGroundBuffers();
 }
@@ -262,18 +272,28 @@ void A3Engine::_generateEnvironment() {
 }
 
 void A3Engine::_setupScene() {
-
-    playerAngle = 0.0f;
-    playerDirection = glm::normalize(-glm::vec3(0, 0, 0.07)) * 0.1f;
     _arcBall = new ArcBall();
-    _arcBall->setPosition( glm::vec3(0.0f, 1.0f, 0.0f) );
-    _arcBall->setLookAtPoint( glm::vec3(0.0f, 0.05f, 0.0f) );
-    playerPos = _arcBall->getLookAtPoint();
-    _arcBall->setTheta( -M_PI / 3.0f );
-    _arcBall->setPhi( M_PI / 2.8f );
-    _arcBall->setRadius(1);
+    _arcBall->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+    _arcBall->setLookAtPoint(glm::vec3(0.0f, 0.05f, 0.0f));
+    _arcBall->setTheta(-M_PI / 3.0f);
+    _arcBall->setPhi(M_PI / 2.8f);
+    _arcBall->setRadius(3);
 
     _arcBall->recomputeOrientation();
+
+    _currentCharacter = _characters[0];
+
+    //Setup Free Cam
+    _freeCam = new CSCI441::FreeCam();
+    _freeCam->setPosition( glm::vec3(60.0f, 40.0f, 30.0f) );
+    _freeCam->setTheta( -M_PI / 3.0f );
+    _freeCam->setPhi( M_PI / 2.8f );
+    _freeCam->recomputeOrientation();
+
+    //Setup First Person
+    _fpCam = new FPCam();
+    _fpCam->setPosition(_currentCharacter->_position);
+    _fpCam->setLookAtPoint(_fpCam->getPosition() + _currentCharacter->_forward);
 
     _cameraSpeed = glm::vec2(0.25f, 0.02f);
 
@@ -325,7 +345,6 @@ void A3Engine::_cleanupBuffers() {
     CSCI441::deleteObjectVBOs();
 
     fprintf( stdout, "[INFO]: ...deleting models..\n" );
-    delete _player;
     delete _arthur;
     delete _clutch;
     delete _saul;
@@ -335,10 +354,10 @@ void A3Engine::_cleanupBuffers() {
 //
 // Rendering / Drawing Functions - this is where the magic happens!
 
-void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, CSCI441::Camera* cam) const {
     // use our lighting shader program
     _lightingShaderProgram->useProgram();
-    glUniform3fv(_lightingShaderUniformLocations.camPos, 1, &(_arcBall->getPosition())[0]);
+    glUniform3fv(_lightingShaderUniformLocations.camPos, 1, &(cam->getPosition())[0]);
 
     //// BEGIN DRAWING THE GROUND PLANE ////
     // draw the ground plane
@@ -350,34 +369,28 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
-    //// END DRAWING THE GROUND PLANE ///
-
-    //// BEGIN DRAWING THE PLANE ////
-    glm::mat4 modelMtx(1.0f);
-    // we are going to cheat and use our look at point to place our plane so that it is always in view
-    modelMtx = glm::translate( modelMtx, playerPos);
-    // rotate the plane with our camera theta direction (we need to rotate the opposite direction so that we always look at the back)
-    //modelMtx = glm::rotate( modelMtx, -_arcBall->getTheta(), CSCI441::Y_AXIS );
-    // rotate the plane with our camera phi direction
-    modelMtx = glm::rotate( modelMtx,  3.14152f/2.0f, CSCI441::X_AXIS );
-    modelMtx = glm::rotate( modelMtx,  (3.14159265358979323846264338327950288f/180.0f) * playerAngle, CSCI441::Z_AXIS );
-    // draw our plane now
-    _player->drawPlayer(modelMtx, viewMtx, projMtx );
-    //// END DRAWING THE PLANE ////
+    //// END DRAWING THE GROUND PLANE ////
 
     //// Begin Drawing Characters ////
     glm::mat4 mvpMtx = projMtx * viewMtx;
+
+    // draw Arthur
     glm::mat4 arthurModelMtx = glm::translate(mvpMtx, _arthur->_position);
-    arthurModelMtx = glm::scale(mvpMtx, _arthur->_scale);
-    glm::mat4 clutchModelMtx = glm::translate(mvpMtx, glm::vec3(3.0f, 0.0f, 0.0f));
+    glm::vec3 _scale = glm::vec3(0.5,0.5,0.5);
+    arthurModelMtx = glm::rotate( arthurModelMtx,  _arthur->_playerAngle, CSCI441::Y_AXIS );
+    arthurModelMtx = glm::scale( arthurModelMtx, _scale);
     _texShaderProgram->useProgram();
-    glUniform3fv(_textureShaderUniformLocations.camPos, 1, &(_arcBall->getPosition())[0]);
+    glUniform3fv(_textureShaderUniformLocations.camPos, 1, &(cam->getPosition())[0]);
     glProgramUniformMatrix4fv(
             _texShaderProgram->getShaderProgramHandle(),
             _textureShaderUniformLocations.mvpMatrix,
             1,
             GL_FALSE, &arthurModelMtx[0][0]);
     _arthur->_model->draw(_texShaderProgram->getShaderProgramHandle());
+
+    // draw Clutch
+    glm::mat4 clutchModelMtx = glm::translate(mvpMtx, _clutch->_position);
+    clutchModelMtx = glm::rotate( clutchModelMtx,  _clutch->_playerAngle, CSCI441::Y_AXIS );
     glProgramUniformMatrix4fv(
             _texShaderProgram->getShaderProgramHandle(),
             _textureShaderUniformLocations.mvpMatrix,
@@ -385,6 +398,7 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
             GL_FALSE, &clutchModelMtx[0][0]);
     _clutch->_model->draw(_texShaderProgram->getShaderProgramHandle());
 
+    // draw Saul
     _saul->draw(projMtx, viewMtx, _texShaderProgram);
     //// End Drawing Characters ////
 }
@@ -394,48 +408,98 @@ void A3Engine::_updateScene() {
     if( _keys[GLFW_KEY_SPACE] ) {
         // go backward if shift held down
         if( _keys[GLFW_KEY_LEFT_SHIFT] || _keys[GLFW_KEY_RIGHT_SHIFT] ) {
-            _arcBall->moveBackward(_cameraSpeed.x);
+            if (!isFreeCam) {
+                _arcBall->moveBackward(_cameraSpeed.x);
+            } else {
+                _freeCam->moveBackward(_cameraSpeed.x);
+            }
         }
         // go forward
         else {
-            _arcBall->moveForward(_cameraSpeed.x);
+            if (!isFreeCam) {
+                _arcBall->moveForward(_cameraSpeed.x);
+            } else {
+                _freeCam->moveForward(_cameraSpeed.x);
+            }
         }
     }
     // turn right
     if( _keys[GLFW_KEY_D] ) {
-        playerAngle += 1;
-        float rads = (M_PI / 180.0f) * playerAngle;
-
-        playerDirection = glm::normalize(-glm::vec3(sin(-rads), 0, cos(-rads))) * 0.1f;
+        _currentCharacter->updateAngle(.05);
+        _fpCam->updateForward(_currentCharacter->_forward);
+        _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0) + (_currentCharacter->_forward * 0.5f));
+        _fpCam->recomputeOrientation();
     }
     // turn left
     if( _keys[GLFW_KEY_A] ) {
-        playerAngle -= 1;
-        float rads = (M_PI / 180.0f) * playerAngle;
-
-        playerDirection = glm::normalize(-glm::vec3(sin(-rads), 0, cos(-rads))) * 0.1f;
-
+        _currentCharacter->updateAngle(-.05);
+        _fpCam->updateForward(_currentCharacter->_forward);
+        _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0)+ (_currentCharacter->_forward * 0.5f));
+        _fpCam->recomputeOrientation();
     }
     // pitch up
     if( _keys[GLFW_KEY_W] ) {
-        glm::vec3 nextPos = playerPos + playerDirection;
+        glm::vec3 nextPos = _currentCharacter->_position + _currentCharacter->_forward;
 
         if(nextPos[2] > -55 && nextPos[2] < 55 && nextPos[0] > -55 && nextPos[0] < 55){
-            _player->moveForward();
-            playerPos = playerPos + playerDirection;
-            _arcBall->updatePos(playerPos);
+            _currentCharacter->updatePosition(true);
+            _arcBall->updatePos(_currentCharacter->_position);
             _arcBall->recomputeOrientation();
+            _fpCam->updateForward(_currentCharacter->_forward);
+            _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0) + (_currentCharacter->_forward * 0.5f));
+            _fpCam->recomputeOrientation();
         }
     }
     // pitch down
     if( _keys[GLFW_KEY_S] ) {
-        glm::vec3 nextPos = playerPos - playerDirection;
-        if(nextPos[2] > -55 && nextPos[2] < 55 && nextPos[0] > -55 && nextPos[0] < 55){
-            _player->moveBackward();
-            playerPos = playerPos - playerDirection;
-            _arcBall->updatePos(playerPos);
+        glm::vec3 nextPos = _currentCharacter->_position - _currentCharacter->_forward;
+        if (nextPos[2] > -55 && nextPos[2] < 55 && nextPos[0] > -55 && nextPos[0] < 55) {
+            _currentCharacter->updatePosition(false);
+            _arcBall->updatePos(_currentCharacter->_position);
             _arcBall->recomputeOrientation();
+            _fpCam->updateForward(_currentCharacter->_forward);
+            _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0) + (_currentCharacter->_forward * 0.5f));
+            _fpCam->recomputeOrientation();
         }
+    }
+    // swap  between characters with 1-3
+    if(_keys[GLFW_KEY_1]){
+        _currentCharacter = _characters[0];
+        _arcBall->updatePos(_arthur->_position);
+        _arcBall->recomputeOrientation();
+        _fpCam->updateForward(_currentCharacter->_forward);
+        _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0)+ (_currentCharacter->_forward * 0.5f));
+        _fpCam->recomputeOrientation();
+    } else if(_keys[GLFW_KEY_2]){
+        _currentCharacter = _characters[1];
+        _arcBall->updatePos(_clutch->_position);
+        _arcBall->recomputeOrientation();
+        _fpCam->updateForward(_currentCharacter->_forward);
+        _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0)+ (_currentCharacter->_forward * 0.5f));
+        _fpCam->recomputeOrientation();
+    } else if(_keys[GLFW_KEY_3]){
+        _currentCharacter = _characters[2];
+        _arcBall->updatePos(_saul->_position);
+        _arcBall->recomputeOrientation();
+        _fpCam->updateForward(_currentCharacter->_forward);
+        _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0)+ (_currentCharacter->_forward * 0.5f));
+        _fpCam->recomputeOrientation();
+    }
+
+    if( _keys[GLFW_KEY_RIGHT] ) {
+        _freeCam->rotate(_cameraSpeed.y, 0.0f);
+    }
+    // turn left
+    if( _keys[GLFW_KEY_LEFT] ) {
+        _freeCam->rotate(-_cameraSpeed.y, 0.0f);
+    }
+    // pitch up
+    if( _keys[GLFW_KEY_UP] ) {
+        _freeCam->rotate(0.0f, _cameraSpeed.y);
+    }
+    // pitch down
+    if( _keys[GLFW_KEY_DOWN] ) {
+        _freeCam->rotate(0.0f, -_cameraSpeed.y);
     }
 }
 
@@ -454,6 +518,7 @@ void A3Engine::run() {
         glfwGetFramebufferSize( _window, &framebufferWidth, &framebufferHeight );
 
         // update the viewport - tell OpenGL we want to render to the whole window
+
         glViewport( 0, 0, framebufferWidth, framebufferHeight );
 
         // set the projection matrix based on the window size
@@ -461,11 +526,38 @@ void A3Engine::run() {
         // with a FOV of 45 degrees, for our current aspect ratio, and Z ranges from [0.001, 1000].
         glm::mat4 projectionMatrix = glm::perspective( 45.0f, (GLfloat) framebufferWidth / (GLfloat) framebufferHeight, 0.001f, 1000.0f );
 
-        // set up our look at matrix to position our camera
-        glm::mat4 viewMatrix = _arcBall->getViewMatrix();
+        //if we're using freecam, use the right camera
+        if(isFreeCam) {
+            // set up our look at matrix to position our camera
+            glm::mat4 viewMatrix = _freeCam->getViewMatrix();
 
-        // draw everything to the window
-        _renderScene(viewMatrix, projectionMatrix);
+            // draw everything to the window
+            _renderScene(viewMatrix, projectionMatrix, _freeCam);
+        } else {
+            // set up our look at matrix to position our camera
+            glm::mat4 viewMatrix = _arcBall->getViewMatrix();
+
+            // draw everything to the window
+            _renderScene(viewMatrix, projectionMatrix, _arcBall);
+        }
+
+
+
+
+        // First Person Camera
+        if (_firstPerson){
+            glViewport( 0, 0, framebufferWidth / 4, framebufferHeight / 4);
+            // set the projection matrix based on the window size
+            // use a perspective projection that ranges
+            // with a FOV of 45 degrees, for our current aspect ratio, and Z ranges from [0.001, 1000].
+            glm::mat4 projectionMatrixFP = glm::perspective( 45.0f, (GLfloat) (framebufferWidth / 8) / (GLfloat) (framebufferHeight / 8), 0.001f, 2000.0f );
+
+            // set up our look at matrix to position our camera
+            glm::mat4 viewMatrixFP = _fpCam->getViewMatrix();
+
+            // draw everything to the window
+            _renderScene(viewMatrixFP, projectionMatrixFP, _fpCam);
+        }
 
         _updateScene();
 
