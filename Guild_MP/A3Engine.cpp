@@ -79,8 +79,14 @@ void A3Engine::handleCursorPositionEvent(glm::vec2 currMousePosition) {
     // if the left mouse button is being held down while the mouse is moving
     if(_leftMouseButtonState == GLFW_PRESS) {
         // rotate the camera by the distance the mouse moved
-        _arcBall->rotate((currMousePosition.x - _mousePosition.x) * 0.005f,
-                         (_mousePosition.y - currMousePosition.y) * 0.005f );
+        if (isFreeCam) {
+            _freeCam->rotate((currMousePosition.x - _mousePosition.x) * 0.005f,
+                             (_mousePosition.y - currMousePosition.y) * 0.005f );
+        } else {
+            _arcBall->rotate((currMousePosition.x - _mousePosition.x) * 0.005f,
+                             (_mousePosition.y - currMousePosition.y) * 0.005f );
+        }
+
     }
 
     // update the mouse position
@@ -372,32 +378,10 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, CSCI441::Camer
     //// END DRAWING THE GROUND PLANE ////
 
     //// Begin Drawing Characters ////
-    glm::mat4 mvpMtx = projMtx * viewMtx;
-
     // draw Arthur
-    glm::mat4 arthurModelMtx = glm::translate(mvpMtx, _arthur->_position);
-    glm::vec3 _scale = glm::vec3(0.5,0.5,0.5);
-    arthurModelMtx = glm::rotate( arthurModelMtx,  _arthur->_playerAngle, CSCI441::Y_AXIS );
-    arthurModelMtx = glm::scale( arthurModelMtx, _scale);
-    _texShaderProgram->useProgram();
-    glUniform3fv(_textureShaderUniformLocations.camPos, 1, &(cam->getPosition())[0]);
-    glProgramUniformMatrix4fv(
-            _texShaderProgram->getShaderProgramHandle(),
-            _textureShaderUniformLocations.mvpMatrix,
-            1,
-            GL_FALSE, &arthurModelMtx[0][0]);
-    _arthur->_model->draw(_texShaderProgram->getShaderProgramHandle());
-
+    _arthur->draw(projMtx, viewMtx, _texShaderProgram);
     // draw Clutch
-    glm::mat4 clutchModelMtx = glm::translate(mvpMtx, _clutch->_position);
-    clutchModelMtx = glm::rotate( clutchModelMtx,  _clutch->_playerAngle, CSCI441::Y_AXIS );
-    glProgramUniformMatrix4fv(
-            _texShaderProgram->getShaderProgramHandle(),
-            _textureShaderUniformLocations.mvpMatrix,
-            1,
-            GL_FALSE, &clutchModelMtx[0][0]);
-    _clutch->_model->draw(_texShaderProgram->getShaderProgramHandle());
-
+    _clutch->draw(projMtx, viewMtx, _texShaderProgram);
     // draw Saul
     _saul->draw(projMtx, viewMtx, _texShaderProgram);
     //// End Drawing Characters ////
@@ -486,24 +470,40 @@ void A3Engine::_updateScene() {
         _fpCam->recomputeOrientation();
     }
 
-    if( _keys[GLFW_KEY_RIGHT] ) {
-        _freeCam->rotate(_cameraSpeed.y, 0.0f);
-    }
-    // turn left
-    if( _keys[GLFW_KEY_LEFT] ) {
-        _freeCam->rotate(-_cameraSpeed.y, 0.0f);
-    }
-    // pitch up
-    if( _keys[GLFW_KEY_UP] ) {
-        _freeCam->rotate(0.0f, _cameraSpeed.y);
-    }
-    // pitch down
-    if( _keys[GLFW_KEY_DOWN] ) {
-        _freeCam->rotate(0.0f, -_cameraSpeed.y);
+    if(isFreeCam) {
+        if (_keys[GLFW_KEY_RIGHT]) {
+            _freeCam->rotate(_cameraSpeed.y, 0.0f);
+        } else
+            // turn left
+        if (_keys[GLFW_KEY_LEFT]) {
+            _freeCam->rotate(-_cameraSpeed.y, 0.0f);
+        } else
+            // pitch up
+        if (_keys[GLFW_KEY_UP]) {
+            _freeCam->rotate(0.0f, _cameraSpeed.y);
+        } else
+            // pitch down
+        if (_keys[GLFW_KEY_DOWN]) {
+            _freeCam->rotate(0.0f, -_cameraSpeed.y);
+        }
     }
 }
 
 void A3Engine::run() {
+    // Instructions
+    printf("\nControls:\n");
+    printf("\tW / S - forwards / backwards\n");
+    printf("\tA / D - turn left / right\n");
+    printf("\tMouse Drag - Pan camera\n");
+    printf("\tSpace / Shift + Space - Zoom camera In / Zoom Camera Out\n");
+    printf("\t1 - Arthur\n");
+    printf("\t2 - Clutch\n");
+    printf("\t3 - Saul\n");
+    printf("\t4 - First Person Camera Toggle\n");
+    printf("\t5 - Free Camera / Arcball Camera Toggle\n");
+    printf("\tLeft, Right, Up, Down - Free Camera Pan\n");
+    printf("\tQ / ESC - quit\n");
+
     //  This is our draw loop - all rendering is done here.  We use a loop to keep the window open
     //	until the user decides to close the window and quit the program.  Without a loop, the
     //	window will display once and then the program exits.

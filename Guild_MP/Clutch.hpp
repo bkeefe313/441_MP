@@ -15,7 +15,7 @@ public:
     Clutch() {
         //instantiate model
         _model = new CSCI441::ModelLoader();
-        _position = glm::vec3(0,0,0);
+        _position = glm::vec3(10,0,0);
         _forward = glm::vec3(0,0,1);
     }
 
@@ -24,7 +24,20 @@ public:
         _model->setAttributeLocations(posAttr, normAttr, texAttr);
     }
 
-    
+    void draw(glm::mat4 projMtx, glm::mat4 viewMtx, CSCI441::ShaderProgram* shader) {
+        glm::mat4 mvpMtx = projMtx * viewMtx;
+
+        glm::mat4 finalMtx = glm::translate(mvpMtx, _position);
+        finalMtx = glm::rotate(finalMtx,  _playerAngle, glm::vec3(0,1,0));
+
+        shader->useProgram();
+
+        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(),
+                                  shader->getUniformLocation("mvpMatrix"),
+                                  1,
+                                  GL_FALSE, &finalMtx[0][0]);
+        _model->draw(shader->getShaderProgramHandle());
+    }
 };
 
 

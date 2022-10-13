@@ -19,6 +19,23 @@ public:
         _model->setAttributeLocations(posAttrib, normAttrib, texAttrib);
     }
 
+    void draw(glm::mat4 projMtx, glm::mat4 viewMtx, CSCI441::ShaderProgram* shader) {
+        glm::mat4 mvpMtx = projMtx * viewMtx;
+
+        glm::mat4 finalMtx = glm::translate(mvpMtx, _position);
+        glm::vec3 _scale = glm::vec3(0.5,0.5,0.5);
+        finalMtx = glm::rotate(finalMtx, _playerAngle, glm::vec3(0,1,0));
+        finalMtx = glm::scale( finalMtx, _scale);
+
+        shader->useProgram();
+
+        glProgramUniformMatrix4fv(shader->getShaderProgramHandle(),
+                                  shader->getUniformLocation("mvpMatrix"),
+                                  1,
+                                  GL_FALSE, &finalMtx[0][0]);
+        _model->draw(shader->getShaderProgramHandle());
+    }
+
 };
 
 
