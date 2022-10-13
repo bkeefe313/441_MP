@@ -29,6 +29,8 @@ public:
         finalMtx = glm::rotate(finalMtx, _playerAngle, glm::vec3(0,1,0));
         // Character Bobbing with Translations
         _bobbingHeight += 0.07;
+        if(_bobbingHeight > M_PI)
+            _bobbingHeight = 0;
         finalMtx = glm::translate(finalMtx, glm::vec3(0, abs(0.5 * sin(_bobbingHeight)), 0));
         finalMtx = glm::scale( finalMtx, _scale);
 

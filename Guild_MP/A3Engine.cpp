@@ -180,6 +180,17 @@ void A3Engine::_setupBuffers() {
                      _textureShaderAttributeLocations.vertNorm,
                      _texShaderProgram->getAttributeLocation("vTexCoord"));
 
+    _models = {
+            new CSCI441::ModelLoader("models/suscan.obj"),
+            new CSCI441::ModelLoader("models/jerma.obj"),
+            new CSCI441::ModelLoader("models/sculpt.obj")
+    };
+    for(CSCI441::ModelLoader* m : _models) {
+        m->setAttributeLocations(_texShaderProgram->getAttributeLocation("vPos"),
+                                 _textureShaderAttributeLocations.vertNorm,
+                                 _texShaderProgram->getAttributeLocation("vTexCoord"));
+    }
+
     _characters= {
             _arthur,
             _clutch,
@@ -301,7 +312,7 @@ void A3Engine::_setupScene() {
     _fpCam->setPosition(_currentCharacter->_position);
     _fpCam->setLookAtPoint(_fpCam->getPosition() + _currentCharacter->_forward);
 
-    _cameraSpeed = glm::vec2(0.25f, 0.02f);
+    _cameraSpeed = glm::vec2(0.1f, 0.02f);
 
     // TODO #6: set lighting uniforms
     _pointLight = new Light(glm::vec3(0, 100, 0), glm::vec3(1, 1, 1));
@@ -385,6 +396,26 @@ void A3Engine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, CSCI441::Camer
     // draw Saul
     _saul->draw(projMtx, viewMtx, _texShaderProgram);
     //// End Drawing Characters ////
+
+    for(int i = 0; i < _models.size(); i++) {
+        glm::mat4 mvpMtx = projMtx * viewMtx;
+        if(i == 0) {
+            mvpMtx = glm::translate(mvpMtx, glm::vec3(-4,0,10));
+            mvpMtx = glm::scale(mvpMtx, glm::vec3(0.5f));
+        }
+        if(i == 1) {
+            mvpMtx = glm::translate(mvpMtx, glm::vec3(15,1,0));
+            mvpMtx = glm::scale(mvpMtx, glm::vec3(0.5f));
+        }
+        if(i == 2) {
+            mvpMtx = glm::translate(mvpMtx, glm::vec3(-22,0,-4));
+            mvpMtx = glm::scale(mvpMtx, glm::vec3(0.5f));
+        }
+
+        glProgramUniformMatrix4fv(_texShaderProgram->getShaderProgramHandle(), _texShaderProgram->getUniformLocation("mvpMatrix"),
+                                  1, GL_FALSE, &mvpMtx[0][0]);
+        _models[i]->draw( _texShaderProgram->getShaderProgramHandle() );
+    }
 }
 
 void A3Engine::_updateScene() {
@@ -409,14 +440,14 @@ void A3Engine::_updateScene() {
     }
     // turn right
     if( _keys[GLFW_KEY_D] ) {
-        _currentCharacter->updateAngle(.05);
+        _currentCharacter->updateAngle(.01);
         _fpCam->updateForward(_currentCharacter->_forward);
         _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0) + (_currentCharacter->_forward * 0.5f));
         _fpCam->recomputeOrientation();
     }
     // turn left
     if( _keys[GLFW_KEY_A] ) {
-        _currentCharacter->updateAngle(-.05);
+        _currentCharacter->updateAngle(-.01);
         _fpCam->updateForward(_currentCharacter->_forward);
         _fpCam->updatePos(_currentCharacter->_position + glm::vec3(0,1,0)+ (_currentCharacter->_forward * 0.5f));
         _fpCam->recomputeOrientation();

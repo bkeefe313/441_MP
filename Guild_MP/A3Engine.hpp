@@ -178,6 +178,8 @@ private:
 
     std::vector<Character*> _characters;
     Character* _currentCharacter;
+
+    std::vector<CSCI441::ModelLoader*> _models;
 };
 
 void lab05_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );
