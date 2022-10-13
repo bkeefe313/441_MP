@@ -19,7 +19,7 @@ public:
         _forward = glm::vec3(0,0,1);
     }
 
-    void initModel(GLint posAttr, GLint normAttr, GLint texAttr) {
+    void initModel(GLint posAttr, GLint normAttr, GLint texAttr) const {
         _model->loadModelFile( "models/clutchnorris.obj" );
         _model->setAttributeLocations(posAttr, normAttr, texAttr);
     }

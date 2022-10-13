@@ -541,16 +541,13 @@ void A3Engine::run() {
             _renderScene(viewMatrix, projectionMatrix, _arcBall);
         }
 
-
-
-
         // First Person Camera
         if (_firstPerson){
-            glViewport( 0, 0, framebufferWidth / 4, framebufferHeight / 4);
+            glViewport( 0, framebufferHeight - framebufferWidth / 5, framebufferWidth / 4, framebufferHeight / 4);
             // set the projection matrix based on the window size
             // use a perspective projection that ranges
             // with a FOV of 45 degrees, for our current aspect ratio, and Z ranges from [0.001, 1000].
-            glm::mat4 projectionMatrixFP = glm::perspective( 45.0f, (GLfloat) (framebufferWidth / 8) / (GLfloat) (framebufferHeight / 8), 0.001f, 2000.0f );
+            glm::mat4 projectionMatrixFP = glm::perspective( 45.0f, (GLfloat) (framebufferWidth / 4) / (GLfloat) (framebufferHeight / 4), 0.001f, 3000.0f );
 
             // set up our look at matrix to position our camera
             glm::mat4 viewMatrixFP = _fpCam->getViewMatrix();

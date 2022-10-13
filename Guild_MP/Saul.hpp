@@ -29,7 +29,7 @@ public:
     }
 
     /// \desc load model data and set attribute locations
-    void initModel(GLint posAttr, GLint normAttr, GLint texAttr) {
+    void initModel(GLint posAttr, GLint normAttr, GLint texAttr) const {
         _model->loadModelFile( "models/saul.obj" );
         _model->setAttributeLocations(posAttr, normAttr, texAttr);
         _limbs->loadModelFile( "models/saul_limbs.obj" );

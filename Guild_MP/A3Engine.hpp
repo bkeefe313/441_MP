@@ -166,7 +166,6 @@ private:
         // TODO #2: add new attributes
         GLint vertNorm;
         GLint vTexCoord;
-
     } _textureShaderAttributeLocations;
 
     /// \desc precomputes the matrix uniforms CPU-side and then sends them

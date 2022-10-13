@@ -8,13 +8,15 @@
 class Arthur : public Character {
 public:
     CSCI441::ModelLoader* _model;
+
+    GLfloat _bobbingHeight;
     Arthur() {
         _model = new CSCI441::ModelLoader();
         _position = glm::vec3(0,0,0);
         _forward = glm::vec3(0,0,1);
     }
 
-    void initModel(GLint posAttrib, GLint normAttrib, GLint texAttrib) {
+    void initModel(GLint posAttrib, GLint normAttrib, GLint texAttrib) const {
         _model->loadModelFile("models/Arthur.obj");
         _model->setAttributeLocations(posAttrib, normAttrib, texAttrib);
     }
@@ -25,6 +27,9 @@ public:
         glm::mat4 finalMtx = glm::translate(mvpMtx, _position);
         glm::vec3 _scale = glm::vec3(0.5,0.5,0.5);
         finalMtx = glm::rotate(finalMtx, _playerAngle, glm::vec3(0,1,0));
+        // Character Bobbing with Translations
+        _bobbingHeight += 0.07;
+        finalMtx = glm::translate(finalMtx, glm::vec3(0, abs(0.5 * sin(_bobbingHeight)), 0));
         finalMtx = glm::scale( finalMtx, _scale);
 
         shader->useProgram();
