@@ -11,6 +11,7 @@
 class Clutch : public Character {
 public:
     CSCI441::ModelLoader* _model;
+    GLfloat _scaleAmount = 1;
 
     Clutch() {
         //instantiate model
@@ -28,7 +29,15 @@ public:
         glm::mat4 mvpMtx = projMtx * viewMtx;
 
         glm::mat4 finalMtx = glm::translate(mvpMtx, _position);
-        finalMtx = glm::rotate(finalMtx,  _playerAngle, glm::vec3(0,1,0));
+        glm::vec3 _scale = glm::vec3(_scaleAmount,_scaleAmount,_scaleAmount);
+        finalMtx = glm::rotate(finalMtx, _playerAngle, glm::vec3(0,1,0));
+        // Character Scaling
+        _scaleAmount += 0.07;
+
+        if(_scaleAmount > 1.5){
+            _scaleAmount = 0.2;
+        }
+        finalMtx = glm::scale( finalMtx, _scale);
 
         shader->useProgram();
 
